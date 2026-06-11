@@ -8,7 +8,7 @@ const users = [
 
 export default function UsersPage() {
   return (
-    <AppShell title="المستخدمون والصلاحيات">
+    <AppShell title="المستخدمون والصلاحيات" allowedRoles={["TENANT_OWNER"]}>
       <section className="surface rounded-lg p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-black">مستخدمو المنشأة</h2>

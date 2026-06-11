@@ -4,7 +4,7 @@ import { reportRows } from "@/lib/demo-data";
 
 export default function ReportsPage() {
   return (
-    <AppShell title="التقارير">
+    <AppShell title="التقارير" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER", "ACCOUNTANT"]}>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {reportRows.map((report) => (
           <div key={report.name} className="surface rounded-lg p-5">

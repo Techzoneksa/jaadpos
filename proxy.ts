@@ -14,7 +14,7 @@ export function proxy(request: NextRequest) {
   const consoleHost = getConfiguredHost("NEXT_PUBLIC_CONSOLE_URL");
   const dashHost = getConfiguredHost("NEXT_PUBLIC_DASH_URL");
 
-  if (dashHost && host === dashHost && !isJaadPath(pathname)) {
+  if (dashHost && host === dashHost && pathname !== "/forbidden" && !isJaadPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = pathname === "/" ? "/jaad" : `/jaad${pathname}`;
     return NextResponse.redirect(url);

@@ -18,6 +18,18 @@ export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
+export function getSessionCookieOptions() {
+  const baseDomain = process.env.APP_BASE_DOMAIN;
+
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    ...(process.env.NODE_ENV === "production" && baseDomain ? { domain: `.${baseDomain}` } : {})
+  };
+}
+
 export function createSessionToken(payload: Omit<SessionPayload, "expiresAt">, secret: string, ttlSeconds = 60 * 60 * 8) {
   const body: SessionPayload = {
     ...payload,

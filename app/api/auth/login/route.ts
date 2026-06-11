@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { createSessionToken, sessionCookieName, verifyPassword } from "@/lib/session";
+import { createSessionToken, getSessionCookieOptions, sessionCookieName, verifyPassword } from "@/lib/session";
 import { consoleUrl, dashUrl } from "@/lib/domains";
 import { platformRoles } from "@/lib/platform-access";
 
@@ -38,12 +38,7 @@ export async function POST(request: Request) {
         ? consoleUrl("/onboarding")
         : consoleUrl("/dashboard");
   const response = NextResponse.redirect(target);
-  response.cookies.set(sessionCookieName, createSessionToken({ userId: user.id, tenantId: user.tenantId, role: user.role }, secret), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/"
-  });
+  response.cookies.set(sessionCookieName, createSessionToken({ userId: user.id, tenantId: user.tenantId, role: user.role }, secret), getSessionCookieOptions());
 
   return response;
 }

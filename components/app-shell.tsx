@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BarChart3, Boxes, Building2, Clock3, LayoutDashboard, ReceiptText, Settings, Store, Users } from "lucide-react";
+import { requireTenantAccess, type TenantRole } from "@/lib/platform-access";
 
 const navItems = [
   { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
@@ -13,7 +14,9 @@ const navItems = [
   { href: "/users", label: "المستخدمون", icon: Users }
 ] as const;
 
-export function AppShell({ title, children }: { title: string; children: React.ReactNode }) {
+export async function AppShell({ title, children, allowedRoles }: { title: string; children: React.ReactNode; allowedRoles?: TenantRole[] }) {
+  await requireTenantAccess(allowedRoles);
+
   return (
     <main className="min-h-screen bg-fog">
       <aside className="fixed inset-y-0 right-0 hidden w-64 border-l border-ink/10 bg-white px-4 py-6 lg:block">

@@ -4,7 +4,7 @@ import { recentOrders } from "@/lib/demo-data";
 
 export default function InvoicesPage() {
   return (
-    <AppShell title="الفواتير">
+    <AppShell title="الفواتير" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER", "CASHIER", "ACCOUNTANT"]}>
       <section className="surface rounded-lg p-5">
         <h2 className="text-xl font-black">الفواتير الضريبية الإلكترونية الأساسية</h2>
         <p className="mt-2 rounded-lg bg-date/10 p-4 leading-7 text-date">الفوترة الإلكترونية الأساسية مفعلة. الربط المباشر مع منصة فاتورة/ZATCA غير مفعل حاليًا.</p>

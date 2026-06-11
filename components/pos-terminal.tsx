@@ -13,6 +13,19 @@ type CartItem = {
   quantity: number;
 };
 
+type DemoInvoice = {
+  orderNumber: string;
+  invoiceNumber: string;
+  issuedAt: Date;
+  orderType: string;
+  paymentMethod: string;
+  items: CartItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  qrPayload: string;
+};
+
 const money = new Intl.NumberFormat("ar-SA", {
   style: "currency",
   currency: "SAR"
@@ -24,6 +37,7 @@ export function PosTerminal() {
   const [orderType, setOrderType] = useState("داخل المحل");
   const [paymentMethod, setPaymentMethod] = useState("مدى");
   const [shiftOpen, setShiftOpen] = useState(true);
+  const [completedInvoice, setCompletedInvoice] = useState<DemoInvoice | null>(null);
 
   const visibleProducts = category === "الكل" ? products : products.filter((product) => product.category === category);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -57,6 +71,34 @@ export function PosTerminal() {
         return quantity > 0 ? [{ ...item, quantity }] : [];
       })
     );
+  }
+
+  function completeOrder() {
+    if (!shiftOpen || cart.length === 0) return;
+
+    const issuedAt = new Date();
+    const orderNumber = `ORD-DEMO-${issuedAt.getHours()}${issuedAt.getMinutes()}${issuedAt.getSeconds()}`;
+    const invoiceNumber = `INV-DEMO-${issuedAt.getFullYear()}${String(issuedAt.getMonth() + 1).padStart(2, "0")}${String(issuedAt.getDate()).padStart(2, "0")}-${String(issuedAt.getSeconds()).padStart(2, "0")}`;
+    const payload = buildBasicQrPayload({
+      sellerName: demoTenant.name,
+      vatNumber: demoTenant.vatNumber,
+      issuedAt,
+      total: totals.total,
+      tax: totals.tax
+    });
+
+    setCompletedInvoice({
+      orderNumber,
+      invoiceNumber,
+      issuedAt,
+      orderType,
+      paymentMethod,
+      items: cart,
+      subtotal: totals.subtotal,
+      tax: totals.tax,
+      total: totals.total,
+      qrPayload: payload
+    });
   }
 
   return (
@@ -184,7 +226,7 @@ export function PosTerminal() {
           </div>
         </div>
 
-        <button type="button" disabled={!shiftOpen || cart.length === 0} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-mint px-4 py-3 font-black text-white disabled:cursor-not-allowed disabled:bg-ink/30">
+        <button type="button" onClick={completeOrder} disabled={!shiftOpen || cart.length === 0} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-mint px-4 py-3 font-black text-white disabled:cursor-not-allowed disabled:bg-ink/30">
           <CreditCard className="h-5 w-5" aria-hidden="true" />
           إتمام الدفع وإصدار الفاتورة
         </button>
@@ -202,6 +244,60 @@ export function PosTerminal() {
             إعادة عرض/طباعة الفاتورة
           </button>
         </div>
+
+        {completedInvoice && (
+          <div className="mt-4 rounded-lg border border-mint/30 bg-mint/5 p-4">
+            <p className="text-sm font-black text-mint">تم إنشاء الطلب والفاتورة للديمو</p>
+            <div className="mt-3 grid gap-2 text-sm">
+              <div className="flex justify-between">
+                <span>رقم الطلب</span>
+                <strong>{completedInvoice.orderNumber}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>رقم الفاتورة</span>
+                <strong>{completedInvoice.invoiceNumber}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>الكاشير</span>
+                <strong>كاشير مقهى جاد</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>نوع الطلب</span>
+                <strong>{completedInvoice.orderType}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>طريقة الدفع</span>
+                <strong>{completedInvoice.paymentMethod}</strong>
+              </div>
+            </div>
+            <div className="mt-3 rounded-lg bg-white p-3 text-sm">
+              {completedInvoice.items.map((item) => (
+                <div key={item.id} className="flex justify-between border-b border-ink/10 py-2 last:border-b-0">
+                  <span>{item.name} × {item.quantity}</span>
+                  <strong>{money.format(item.price * item.quantity)}</strong>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 grid gap-2 text-sm">
+              <div className="flex justify-between">
+                <span>الإجمالي قبل الضريبة</span>
+                <strong>{money.format(completedInvoice.subtotal)}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>ضريبة 15%</span>
+                <strong>{money.format(completedInvoice.tax)}</strong>
+              </div>
+              <div className="flex justify-between text-base font-black">
+                <span>الإجمالي شامل الضريبة</span>
+                <span>{money.format(completedInvoice.total)}</span>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-white p-3">
+              <p className="text-xs leading-6 text-ink/60">فواتير ضريبية إلكترونية أساسية مع QR. الربط المباشر مع منصة فاتورة/ZATCA Phase 2 خدمة متقدمة لاحقًا.</p>
+              <QRCodeSVG value={completedInvoice.qrPayload} size={72} />
+            </div>
+          </div>
+        )}
       </aside>
     </div>
   );

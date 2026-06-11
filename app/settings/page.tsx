@@ -2,7 +2,7 @@ import { AppShell } from "@/components/app-shell";
 
 export default function SettingsPage() {
   return (
-    <AppShell title="إعدادات المنشأة والضريبة والفاتورة">
+    <AppShell title="إعدادات المنشأة والضريبة والفاتورة" allowedRoles={["TENANT_OWNER"]}>
       <div className="grid gap-5 xl:grid-cols-3">
         <section className="surface rounded-lg p-5">
           <h2 className="text-xl font-black">بيانات المنشأة</h2>

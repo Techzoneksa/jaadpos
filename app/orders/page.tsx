@@ -4,7 +4,7 @@ import { recentOrders } from "@/lib/demo-data";
 
 export default function OrdersPage() {
   return (
-    <AppShell title="الطلبات والفواتير">
+    <AppShell title="الطلبات والفواتير" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER", "CASHIER", "ACCOUNTANT"]}>
       <section className="surface rounded-lg p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-black">قائمة الطلبات</h2>

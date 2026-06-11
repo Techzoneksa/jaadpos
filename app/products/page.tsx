@@ -3,7 +3,7 @@ import { products } from "@/lib/demo-data";
 
 export default function ProductsPage() {
   return (
-    <AppShell title="المنتجات والتصنيفات">
+    <AppShell title="المنتجات والتصنيفات" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER"]}>
       <section className="surface rounded-lg p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-black">منتجات المنشأة</h2>

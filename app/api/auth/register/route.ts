@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { createSessionToken, hashPassword, sessionCookieName } from "@/lib/session";
+import { createSessionToken, getSessionCookieOptions, hashPassword, sessionCookieName } from "@/lib/session";
 import { trialEndsFrom } from "@/lib/subscription";
 import { consoleUrl } from "@/lib/domains";
 
@@ -80,12 +80,7 @@ export async function POST(request: Request) {
 
   const owner = tenant.users[0];
   const response = NextResponse.redirect(consoleUrl("/onboarding"));
-  response.cookies.set(sessionCookieName, createSessionToken({ userId: owner.id, tenantId: tenant.id, role: owner.role }, secret), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/"
-  });
+  response.cookies.set(sessionCookieName, createSessionToken({ userId: owner.id, tenantId: tenant.id, role: owner.role }, secret), getSessionCookieOptions());
 
   return response;
 }
