@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { PlanCode } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createSessionToken, hashPassword, sessionCookieName } from "@/lib/session";
@@ -16,6 +15,12 @@ const registerSchema = z.object({
   plan: z.enum(["starter", "growth", "pro"])
 });
 
+const planCodes = {
+  starter: "STARTER",
+  growth: "GROWTH",
+  pro: "PRO"
+} as const;
+
 export async function POST(request: Request) {
   const form = Object.fromEntries(await request.formData());
   const input = registerSchema.parse(form);
@@ -26,7 +31,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "AUTH_SECRET is required" }, { status: 500 });
   }
 
-  const planCode = input.plan.toUpperCase() as PlanCode;
+  const planCode = planCodes[input.plan];
   const plan = await prisma.plan.findUniqueOrThrow({
     where: { code: planCode }
   });

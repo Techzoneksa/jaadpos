@@ -27,7 +27,7 @@ JAADPOS is an Arabic-first SaaS Online POS MVP for restaurants and cafes in Saud
 ## Development
 
 ```bash
-npm install
+npm ci
 npm run prisma:generate
 npm run typecheck
 npm run lint
@@ -38,7 +38,8 @@ npm run build
 
 ```bash
 npm run prisma:dev
-npm run seed
+npm run prisma:migrate:deploy
+npm run prisma:seed
 ```
 
 Seed passwords are read from environment variables only. See `.env.example`.

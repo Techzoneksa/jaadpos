@@ -2,6 +2,9 @@
   "name": "jaadpos",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,8 +13,10 @@
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:dev": "prisma migrate dev",
     "seed": "tsx prisma/seed.ts",
+    "prisma:seed": "tsx prisma/seed.ts",
     "check:production-urls": "node scripts/check-production-urls.mjs"
   },
   "dependencies": {
