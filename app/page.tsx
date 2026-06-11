@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, BarChart3, CheckCircle2, Clock3, QrCode, ReceiptText, Store, Users } from "lucide-react";
 import { MarketingVisual } from "@/components/marketing-visual";
+import { consoleUrl } from "@/lib/domains";
 import { plans } from "@/lib/plans";
 
 const features = [
@@ -36,7 +37,7 @@ export default function Home() {
             <a href="#plans">الباقات</a>
             <a href="#faq">الأسئلة</a>
           </nav>
-          <Link href="/auth/login" className="rounded-lg border border-ink/10 px-4 py-2 text-sm font-bold">
+          <Link href={consoleUrl("/login")} className="rounded-lg border border-ink/10 px-4 py-2 text-sm font-bold">
             تسجيل الدخول
           </Link>
         </div>
@@ -48,11 +49,11 @@ export default function Home() {
           <h1 className="text-4xl font-black leading-tight text-ink md:text-6xl">JAADPOS — نظام نقاط بيع سحابي للمطاعم والكافيهات</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-ink/70">كاشير، فواتير ضريبية، QR، ورديات، تقارير، وفروع في منصة واحدة.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/auth/register" className="inline-flex items-center gap-2 rounded-lg bg-mint px-5 py-3 font-black text-white">
+            <Link href={consoleUrl("/signup")} className="inline-flex items-center gap-2 rounded-lg bg-mint px-5 py-3 font-black text-white">
               ابدأ التجربة المجانية
               <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </Link>
-            <Link href="/dashboard" className="rounded-lg border border-ink/10 bg-white px-5 py-3 font-black">
+            <Link href={consoleUrl("/dashboard")} className="rounded-lg border border-ink/10 bg-white px-5 py-3 font-black">
               عرض تجربة النظام
             </Link>
           </div>
@@ -121,10 +122,10 @@ export default function Home() {
             ))}
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/auth/register" className="rounded-lg bg-mint px-5 py-3 font-black text-white">
+            <Link href={consoleUrl("/signup")} className="rounded-lg bg-mint px-5 py-3 font-black text-white">
               ابدأ التجربة المجانية
             </Link>
-            <Link href="/auth/login" className="rounded-lg border border-ink/10 px-5 py-3 font-black">
+            <Link href={consoleUrl("/login")} className="rounded-lg border border-ink/10 px-5 py-3 font-black">
               تسجيل الدخول
             </Link>
           </div>

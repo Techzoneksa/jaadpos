@@ -27,7 +27,8 @@ enum SubscriptionStatus {
 }
 
 enum RoleKey {
-  PLATFORM_ADMIN
+  PLATFORM_OWNER
+  PLATFORM_STAFF
   TENANT_OWNER
   BRANCH_MANAGER
   CASHIER

@@ -25,7 +25,7 @@ function requireEnv(name: string) {
 
 async function main() {
   const now = new Date();
-  const adminPassword = await hashPassword(requireEnv("SEED_ADMIN_PASSWORD"));
+  const platformOwnerPassword = await hashPassword(requireEnv("SEED_PLATFORM_OWNER_PASSWORD"));
   const ownerPassword = await hashPassword(requireEnv("SEED_OWNER_PASSWORD"));
   const cashierPassword = await hashPassword(requireEnv("SEED_CASHIER_PASSWORD"));
   const accountantPassword = await hashPassword(requireEnv("SEED_ACCOUNTANT_PASSWORD"));
@@ -92,13 +92,13 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: "admin@jaadpos.com" },
+    where: { email: "platform@jaadpos.com" },
     update: {},
     create: {
-      email: "admin@jaadpos.com",
-      name: "Platform Admin",
-      passwordHash: adminPassword,
-      role: "PLATFORM_ADMIN"
+      email: "platform@jaadpos.com",
+      name: "JAAD Platform Owner",
+      passwordHash: platformOwnerPassword,
+      role: "PLATFORM_OWNER"
     }
   });
 

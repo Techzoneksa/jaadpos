@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { BarChart3, Building2, LayoutDashboard, ReceiptText, Settings, ShieldCheck, Store } from "lucide-react";
+import { BarChart3, Boxes, Building2, Clock3, LayoutDashboard, ReceiptText, Settings, Store, Users } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
   { href: "/pos", label: "POS", icon: Store },
+  { href: "/products", label: "المنتجات", icon: Boxes },
   { href: "/orders", label: "الطلبات", icon: ReceiptText },
+  { href: "/invoices", label: "الفواتير", icon: ReceiptText },
+  { href: "/shifts", label: "الورديات", icon: Clock3 },
   { href: "/reports", label: "التقارير", icon: BarChart3 },
   { href: "/settings", label: "الإعدادات", icon: Settings },
-  { href: "/admin", label: "إدارة المنصة", icon: ShieldCheck }
+  { href: "/users", label: "المستخدمون", icon: Users }
 ] as const;
 
 export function AppShell({ title, children }: { title: string; children: React.ReactNode }) {

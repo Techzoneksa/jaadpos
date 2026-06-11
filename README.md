@@ -13,7 +13,7 @@ JAADPOS is an Arabic-first SaaS Online POS MVP for restaurants and cafes in Saud
 - Refund records without deleting original invoices.
 - Shift opening and closing structure.
 - VAT, sales, payments, refunds, cashier, invoices, and shift report surfaces.
-- Platform Admin dashboard.
+- JAAD internal dashboard on the approved dash domain.
 
 ## Outside MVP
 
@@ -45,12 +45,19 @@ Seed passwords are read from environment variables only. See `.env.example`.
 
 ## Demo Accounts
 
-- Platform Admin: `admin@jaadpos.com`
+- Platform Owner: `platform@jaadpos.com`
 - Tenant Owner: `owner@jaadpos.com`
 - Cashier: `cashier@jaadpos.com`
 - Accountant: `accountant@jaadpos.com`
 
 Passwords should be set through seed environment variables and shared only in deployment reports.
+
+## Domain Architecture
+
+- Marketing: `NEXT_PUBLIC_MARKETING_URL`, normally `https://jaadsa.com`.
+- Customer Console: `NEXT_PUBLIC_CONSOLE_URL`, normally `https://console.jaadsa.com`.
+- JAAD Dashboard: `NEXT_PUBLIC_DASH_URL`, normally `https://dash.jaadsa.com`.
+- Root domain: `APP_BASE_DOMAIN`, normally `jaadsa.com`.
 
 ## Deployment
 

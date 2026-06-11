@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createSessionToken, sessionCookieName, verifyPassword } from "@/lib/session";
+import { consoleUrl, dashUrl } from "@/lib/domains";
+import { platformRoles } from "@/lib/platform-access";
 
 export const runtime = "nodejs";
 
@@ -28,8 +30,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
-  const target = user.tenant && !user.tenant.onboardingCompleted ? "/onboarding" : "/dashboard";
-  const response = NextResponse.redirect(new URL(target, request.url));
+  const target = platformRoles.has(user.role)
+    ? dashUrl("/jaad")
+    : user.role === "CASHIER"
+      ? consoleUrl("/pos")
+      : user.tenant && !user.tenant.onboardingCompleted
+        ? consoleUrl("/onboarding")
+        : consoleUrl("/dashboard");
+  const response = NextResponse.redirect(target);
   response.cookies.set(sessionCookieName, createSessionToken({ userId: user.id, tenantId: user.tenantId, role: user.role }, secret), {
     httpOnly: true,
     sameSite: "lax",

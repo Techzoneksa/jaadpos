@@ -1,10 +1,15 @@
-import { AppShell } from "@/components/app-shell";
+import { JaadShell } from "@/components/jaad-shell";
 import { StatCard } from "@/components/stat-card";
 import { platformTenants } from "@/lib/demo-data";
+import { requirePlatformAccess } from "@/lib/platform-access";
 
-export default function AdminPage() {
+export const dynamic = "force-dynamic";
+
+export default async function JaadDashboardPage() {
+  await requirePlatformAccess();
+
   return (
-    <AppShell title="إدارة المنصة">
+    <JaadShell title="لوحة جاد">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="عدد العملاء الكلي" value="3" hint="تجريبي في MVP" />
         <StatCard label="في التجربة" value="1" hint="Trial active" />
@@ -12,7 +17,7 @@ export default function AdminPage() {
         <StatCard label="إجمالي المبيعات" value="62,986.50 ر.س" hint="عبر المنصة" />
       </div>
       <section className="surface mt-5 rounded-lg p-5">
-        <h2 className="text-xl font-black">Tenants</h2>
+        <h2 className="text-xl font-black">عملاء المنصة</h2>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[860px] text-sm">
             <thead className="bg-fog text-ink/60">
@@ -25,7 +30,6 @@ export default function AdminPage() {
                 <th className="p-3 text-right">الأجهزة</th>
                 <th className="p-3 text-right">المستخدمون</th>
                 <th className="p-3 text-right">المبيعات</th>
-                <th className="p-3 text-right">إجراءات</th>
               </tr>
             </thead>
             <tbody>
@@ -39,18 +43,12 @@ export default function AdminPage() {
                   <td className="p-3">{tenant.devices}</td>
                   <td className="p-3">{tenant.users}</td>
                   <td className="p-3 font-bold">{tenant.sales}</td>
-                  <td className="p-3">
-                    <div className="flex gap-2">
-                      <button type="button" className="rounded-lg bg-mint px-3 py-2 font-bold text-white">تفعيل</button>
-                      <button type="button" className="rounded-lg border border-ink/10 px-3 py-2 font-bold">تمديد</button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </section>
-    </AppShell>
+    </JaadShell>
   );
 }

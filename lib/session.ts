@@ -30,7 +30,12 @@ export function createSessionToken(payload: Omit<SessionPayload, "expiresAt">, s
 
 export function verifySessionToken(token: string, secret: string): SessionPayload | null {
   const [encoded, signature] = token.split(".");
-  if (!encoded || !signature || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(sign(encoded, secret)))) {
+  if (!encoded || !signature) {
+    return null;
+  }
+
+  const expectedSignature = sign(encoded, secret);
+  if (signature.length !== expectedSignature.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
     return null;
   }
 
