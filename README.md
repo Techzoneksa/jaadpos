@@ -18,8 +18,8 @@ JAADPOS is an Arabic-first SaaS Online POS MVP for restaurants and cafes in Saud
 ## Outside MVP
 
 - Offline POS.
-- Direct ZATCA Phase 2 integration.
-- Automatic invoice reporting to Fatoora.
+- No direct ZATCA Phase 2 integration in this MVP.
+- No automatic invoice reporting to Fatoora in this MVP.
 - OTP, CSID, CSR, XML signing, clearance, and reporting APIs.
 - Native mobile app.
 - Real payment gateway.

@@ -34,6 +34,8 @@ export async function POST(request: Request) {
     ? dashUrl("/jaad")
     : user.role === "CASHIER"
       ? consoleUrl("/pos")
+      : user.role === "ACCOUNTANT"
+        ? consoleUrl("/reports")
       : user.tenant && !user.tenant.onboardingCompleted
         ? consoleUrl("/onboarding")
         : consoleUrl("/dashboard");

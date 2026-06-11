@@ -1,8 +1,44 @@
 import { Download } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { reportRows } from "@/lib/demo-data";
+import { requireTenantAccess } from "@/lib/platform-access";
+import { prisma } from "@/lib/prisma";
 
-export default function ReportsPage() {
+const money = new Intl.NumberFormat("ar-SA", {
+  style: "currency",
+  currency: "SAR"
+});
+
+export const dynamic = "force-dynamic";
+
+export default async function ReportsPage() {
+  const session = await requireTenantAccess(["TENANT_OWNER", "BRANCH_MANAGER", "ACCOUNTANT"]);
+  const [paidOrders, refunds, invoiceCount] = await Promise.all([
+    prisma.order.aggregate({
+      where: { tenantId: session.tenantId!, status: "PAID" },
+      _sum: { subtotal: true, taxTotal: true, total: true },
+      _count: { _all: true }
+    }),
+    prisma.refund.aggregate({
+      where: { tenantId: session.tenantId! },
+      _sum: { amount: true, taxAmount: true },
+      _count: { _all: true }
+    }),
+    prisma.invoice.count({ where: { tenantId: session.tenantId! } })
+  ]);
+
+  const subtotal = Number(paidOrders._sum.subtotal ?? 0);
+  const tax = Number(paidOrders._sum.taxTotal ?? 0);
+  const total = Number(paidOrders._sum.total ?? 0);
+  const refundTotal = Number(refunds._sum.amount ?? 0);
+  const refundTax = Number(refunds._sum.taxAmount ?? 0);
+  const netTax = Math.max(0, tax - refundTax);
+  const reportRows = [
+    { name: "إجمالي المبيعات", total: money.format(total), change: `${paidOrders._count._all} طلب` },
+    { name: "الفواتير", total: String(invoiceCount), change: "Basic QR" },
+    { name: "المرتجعات", total: money.format(refundTotal), change: `${refunds._count._all} عملية` },
+    { name: "صافي VAT", total: money.format(netTax), change: "بعد المرتجعات" }
+  ];
+
   return (
     <AppShell title="التقارير" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER", "ACCOUNTANT"]}>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -22,11 +58,11 @@ export default function ReportsPage() {
         <h2 className="text-xl font-black">تقرير VAT</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-5">
           {[
-            ["قبل الضريبة", "2,474.78 ر.س"],
-            ["الضريبة", "371.22 ر.س"],
-            ["شامل الضريبة", "2,846.00 ر.س"],
-            ["المرتجعات", "360.00 ر.س"],
-            ["صافي الضريبة", "324.26 ر.س"]
+            ["قبل الضريبة", money.format(subtotal)],
+            ["الضريبة", money.format(tax)],
+            ["شامل الضريبة", money.format(total)],
+            ["المرتجعات", money.format(refundTotal)],
+            ["صافي الضريبة", money.format(netTax)]
           ].map(([label, value]) => (
             <div key={label} className="rounded-lg bg-fog p-4">
               <p className="text-sm text-ink/60">{label}</p>

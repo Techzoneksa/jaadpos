@@ -49,7 +49,7 @@ export default function Home() {
           <h1 className="text-4xl font-black leading-tight text-ink md:text-6xl">JAADPOS — نظام نقاط بيع سحابي للمطاعم والكافيهات</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-ink/70">كاشير، فواتير ضريبية، QR، ورديات، تقارير، وفروع في منصة واحدة.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href={consoleUrl("/signup")} className="inline-flex items-center gap-2 rounded-lg bg-mint px-5 py-3 font-black text-white">
+            <Link href={consoleUrl("/signup?plan=growth")} className="inline-flex items-center gap-2 rounded-lg bg-mint px-5 py-3 font-black text-white">
               ابدأ التجربة المجانية
               <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </Link>
@@ -104,6 +104,10 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
+                <Link href={consoleUrl(`/signup?plan=${plan.code}`)} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-mint px-4 py-3 font-black text-white">
+                  ابدأ تجربة {plan.name}
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                </Link>
               </div>
             ))}
           </div>
@@ -122,7 +126,7 @@ export default function Home() {
             ))}
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href={consoleUrl("/signup")} className="rounded-lg bg-mint px-5 py-3 font-black text-white">
+            <Link href={consoleUrl("/signup?plan=growth")} className="rounded-lg bg-mint px-5 py-3 font-black text-white">
               ابدأ التجربة المجانية
             </Link>
             <Link href={consoleUrl("/login")} className="rounded-lg border border-ink/10 px-5 py-3 font-black">

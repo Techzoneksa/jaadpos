@@ -1,10 +1,44 @@
 import { RotateCcw, Search } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { recentOrders } from "@/lib/demo-data";
+import { requireTenantAccess } from "@/lib/platform-access";
+import { prisma } from "@/lib/prisma";
 
-export default function OrdersPage() {
+const money = new Intl.NumberFormat("ar-SA", {
+  style: "currency",
+  currency: "SAR"
+});
+
+const orderTypeLabels = {
+  DINE_IN: "داخل المحل",
+  TAKEAWAY: "سفري",
+  DELIVERY: "توصيل"
+} as const;
+
+const paymentLabels = {
+  CASH: "نقدي",
+  MADA: "مدى",
+  VISA_MASTERCARD: "Visa/Mastercard",
+  APPLE_PAY: "Apple Pay"
+} as const;
+
+export const dynamic = "force-dynamic";
+
+export default async function OrdersPage() {
+  const session = await requireTenantAccess(["TENANT_OWNER", "BRANCH_MANAGER"]);
+  const orders = await prisma.order.findMany({
+    where: { tenantId: session.tenantId! },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: {
+      invoice: true,
+      payments: true,
+      branch: { select: { name: true } },
+      cashier: { select: { name: true } }
+    }
+  });
+
   return (
-    <AppShell title="الطلبات والفواتير" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER", "CASHIER", "ACCOUNTANT"]}>
+    <AppShell title="الطلبات والفواتير" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER"]}>
       <section className="surface rounded-lg p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-black">قائمة الطلبات</h2>
@@ -36,24 +70,30 @@ export default function OrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {recentOrders.map((order) => (
-                <tr key={order.id} className="border-b border-ink/10">
-                  <td className="p-3 font-bold">{order.id}</td>
-                  <td className="p-3">{order.invoice}</td>
-                  <td className="p-3">2026-06-11</td>
-                  <td className="p-3">الفرع الرئيسي</td>
-                  <td className="p-3">{order.cashier}</td>
-                  <td className="p-3">{order.type}</td>
-                  <td className="p-3">{order.payment}</td>
-                  <td className="p-3 font-bold">{order.total}</td>
-                  <td className="p-3">
-                    <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-fog px-3 py-2 font-bold text-ink">
-                      <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                      استرجاع
-                    </button>
-                  </td>
+              {orders.length ? (
+                orders.map((order) => (
+                  <tr key={order.id} className="border-b border-ink/10">
+                    <td className="p-3 font-bold">{order.orderNumber}</td>
+                    <td className="p-3">{order.invoice?.invoiceNumber ?? "-"}</td>
+                    <td className="p-3">{order.createdAt.toLocaleDateString("ar-SA")}</td>
+                    <td className="p-3">{order.branch.name}</td>
+                    <td className="p-3">{order.cashier.name}</td>
+                    <td className="p-3">{orderTypeLabels[order.orderType]}</td>
+                    <td className="p-3">{order.payments[0] ? paymentLabels[order.payments[0].method] : "-"}</td>
+                    <td className="p-3 font-bold">{money.format(Number(order.total))}</td>
+                    <td className="p-3">
+                      <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-fog px-3 py-2 font-bold text-ink">
+                        <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                        استرجاع
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="p-5 text-center text-ink/55" colSpan={9}>لا توجد طلبات بعد.</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

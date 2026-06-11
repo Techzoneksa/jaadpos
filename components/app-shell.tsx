@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BarChart3, Boxes, Building2, Clock3, LayoutDashboard, ReceiptText, Settings, Store, Users } from "lucide-react";
 import { requireTenantAccess, type TenantRole } from "@/lib/platform-access";
+import { prisma } from "@/lib/prisma";
 
 const navItems = [
   { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
@@ -14,8 +15,23 @@ const navItems = [
   { href: "/users", label: "المستخدمون", icon: Users }
 ] as const;
 
+const navByRole: Record<TenantRole, Array<(typeof navItems)[number]["href"]>> = {
+  TENANT_OWNER: navItems.map((item) => item.href),
+  BRANCH_MANAGER: ["/dashboard", "/pos", "/products", "/orders", "/invoices", "/shifts", "/reports"],
+  CASHIER: ["/pos"],
+  ACCOUNTANT: ["/invoices", "/reports"]
+};
+
 export async function AppShell({ title, children, allowedRoles }: { title: string; children: React.ReactNode; allowedRoles?: TenantRole[] }) {
-  await requireTenantAccess(allowedRoles);
+  const session = await requireTenantAccess(allowedRoles);
+  const role = session.role as TenantRole;
+  const tenant = session.tenantId
+    ? await prisma.tenant.findUnique({
+        where: { id: session.tenantId },
+        select: { name: true }
+      })
+    : null;
+  const visibleNavItems = navItems.filter((item) => navByRole[role]?.includes(item.href));
 
   return (
     <main className="min-h-screen bg-fog">
@@ -28,7 +44,7 @@ export async function AppShell({ title, children, allowedRoles }: { title: strin
           </span>
         </Link>
         <nav className="mt-8 space-y-1">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <Link key={item.href} href={item.href} className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-ink/70 hover:bg-fog hover:text-ink">
               <item.icon className="h-4 w-4" aria-hidden="true" />
               {item.label}
@@ -46,7 +62,7 @@ export async function AppShell({ title, children, allowedRoles }: { title: strin
             </div>
             <div className="flex items-center gap-2 rounded-lg border border-ink/10 bg-fog px-3 py-2 text-sm text-ink/70">
               <Building2 className="h-4 w-4 text-mint" aria-hidden="true" />
-              مقهى جاد التجريبي
+              {tenant?.name ?? "منشأة JAADPOS"}
             </div>
           </div>
         </header>

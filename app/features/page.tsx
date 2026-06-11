@@ -24,7 +24,7 @@ export default function FeaturesPage() {
             </div>
           ))}
         </div>
-        <Link href={consoleUrl("/signup")} className="mt-8 inline-flex rounded-lg bg-mint px-5 py-3 font-black text-white">ابدأ التجربة المجانية</Link>
+        <Link href={consoleUrl("/signup?plan=growth")} className="mt-8 inline-flex rounded-lg bg-mint px-5 py-3 font-black text-white">ابدأ التجربة المجانية</Link>
       </section>
     </main>
   );

@@ -3,20 +3,30 @@
 import { useMemo, useState } from "react";
 import { CreditCard, Minus, Plus, Printer, Trash2, Wifi } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { categories, demoTenant, products } from "@/lib/demo-data";
 import { buildBasicQrPayload, calculateTax } from "@/lib/tax";
 
-type CartItem = {
+export type PosProduct = {
   id: string;
   name: string;
+  category: string;
   price: number;
+};
+
+export type PosTenantInfo = {
+  name: string;
+  vatNumber: string;
+  branchName: string;
+  deviceCode: string;
+};
+
+type CartItem = PosProduct & {
   quantity: number;
 };
 
-type DemoInvoice = {
+type CompletedInvoice = {
   orderNumber: string;
   invoiceNumber: string;
-  issuedAt: Date;
+  issuedAt: string;
   orderType: string;
   paymentMethod: string;
   items: CartItem[];
@@ -26,40 +36,55 @@ type DemoInvoice = {
   qrPayload: string;
 };
 
+type PosTerminalProps = {
+  products: PosProduct[];
+  categories: string[];
+  tenant: PosTenantInfo;
+  canSell: boolean;
+  blockedMessage?: string;
+};
+
 const money = new Intl.NumberFormat("ar-SA", {
   style: "currency",
   currency: "SAR"
 });
 
-export function PosTerminal() {
+export function PosTerminal({ products, categories, tenant, canSell, blockedMessage }: PosTerminalProps) {
   const [category, setCategory] = useState("الكل");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orderType, setOrderType] = useState("داخل المحل");
   const [paymentMethod, setPaymentMethod] = useState("مدى");
   const [shiftOpen, setShiftOpen] = useState(true);
-  const [completedInvoice, setCompletedInvoice] = useState<DemoInvoice | null>(null);
+  const [completedInvoice, setCompletedInvoice] = useState<CompletedInvoice | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const visibleProducts = category === "الكل" ? products : products.filter((product) => product.category === category);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totals = calculateTax(subtotal, false);
   const qrPayload = buildBasicQrPayload({
-    sellerName: demoTenant.name,
-    vatNumber: demoTenant.vatNumber,
-    issuedAt: new Date("2026-06-11T10:30:00+03:00"),
+    sellerName: tenant.name,
+    vatNumber: tenant.vatNumber,
+    issuedAt: new Date(),
     total: totals.total,
     tax: totals.tax
   });
 
   const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
+  const canCheckout = canSell && shiftOpen && cart.length > 0 && !isSubmitting;
 
-  function addItem(product: (typeof products)[number]) {
+  function addItem(product: PosProduct) {
+    if (!canSell || !shiftOpen) return;
+
+    setCompletedInvoice(null);
+    setError(null);
     setCart((current) => {
       const existing = current.find((item) => item.id === product.id);
       if (existing) {
         return current.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
       }
 
-      return [...current, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
+      return [...current, { ...product, quantity: 1 }];
     });
   }
 
@@ -73,32 +98,34 @@ export function PosTerminal() {
     );
   }
 
-  function completeOrder() {
-    if (!shiftOpen || cart.length === 0) return;
+  async function completeOrder() {
+    if (!canCheckout) return;
 
-    const issuedAt = new Date();
-    const orderNumber = `ORD-DEMO-${issuedAt.getHours()}${issuedAt.getMinutes()}${issuedAt.getSeconds()}`;
-    const invoiceNumber = `INV-DEMO-${issuedAt.getFullYear()}${String(issuedAt.getMonth() + 1).padStart(2, "0")}${String(issuedAt.getDate()).padStart(2, "0")}-${String(issuedAt.getSeconds()).padStart(2, "0")}`;
-    const payload = buildBasicQrPayload({
-      sellerName: demoTenant.name,
-      vatNumber: demoTenant.vatNumber,
-      issuedAt,
-      total: totals.total,
-      tax: totals.tax
-    });
+    setIsSubmitting(true);
+    setError(null);
 
-    setCompletedInvoice({
-      orderNumber,
-      invoiceNumber,
-      issuedAt,
-      orderType,
-      paymentMethod,
-      items: cart,
-      subtotal: totals.subtotal,
-      tax: totals.tax,
-      total: totals.total,
-      qrPayload: payload
-    });
+    try {
+      const response = await fetch("/api/pos/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart.map((item) => ({ productId: item.id, quantity: item.quantity })),
+          orderType,
+          paymentMethod
+        })
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setError(data?.error ?? "تعذر إنشاء الطلب. حاول مرة أخرى.");
+        return;
+      }
+
+      setCompletedInvoice(data as CompletedInvoice);
+      setCart([]);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -108,17 +135,19 @@ export function PosTerminal() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm text-ink/60">الفرع والجهاز</p>
-              <h2 className="text-xl font-bold">الفرع الرئيسي · POS-01</h2>
+              <h2 className="text-xl font-bold">{tenant.branchName} · {tenant.deviceCode}</h2>
             </div>
             <button
               type="button"
               onClick={() => setShiftOpen((value) => !value)}
-              className={shiftOpen ? "rounded-lg bg-mint px-4 py-2 text-sm font-bold text-white" : "rounded-lg bg-date px-4 py-2 text-sm font-bold text-white"}
+              disabled={!canSell}
+              className={shiftOpen ? "rounded-lg bg-mint px-4 py-2 text-sm font-bold text-white disabled:bg-ink/30" : "rounded-lg bg-date px-4 py-2 text-sm font-bold text-white disabled:bg-ink/30"}
             >
               {shiftOpen ? "وردية مفتوحة" : "افتح وردية"}
             </button>
           </div>
-          {!shiftOpen && <p className="mt-3 rounded-lg bg-date/10 p-3 text-sm font-bold text-date">يجب فتح وردية قبل إنشاء طلب جديد.</p>}
+          {!canSell && <p className="mt-3 rounded-lg bg-date/10 p-3 text-sm font-bold text-date">{blockedMessage}</p>}
+          {!shiftOpen && canSell && <p className="mt-3 rounded-lg bg-date/10 p-3 text-sm font-bold text-date">يجب فتح وردية قبل إنشاء طلب جديد.</p>}
           <p className="mt-3 flex items-center gap-2 text-sm text-ink/60">
             <Wifi className="h-4 w-4 text-mint" aria-hidden="true" />
             يتطلب JAADPOS اتصالًا بالإنترنت في هذه النسخة. سيتم دعم وضع عدم الاتصال لاحقًا.
@@ -126,7 +155,7 @@ export function PosTerminal() {
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {categories.map((item) => (
+          {["الكل", ...categories].map((item) => (
             <button
               key={item}
               type="button"
@@ -138,21 +167,27 @@ export function PosTerminal() {
           ))}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {visibleProducts.map((product) => (
-            <button
-              key={product.id}
-              type="button"
-              onClick={() => addItem(product)}
-              disabled={!shiftOpen}
-              className="surface min-h-32 rounded-lg p-4 text-right transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span className="text-xs text-ink/50">{product.category}</span>
-              <strong className="mt-3 block text-lg">{product.name}</strong>
-              <span className="mt-2 block text-sm font-bold text-mint">{money.format(product.price)}</span>
-            </button>
-          ))}
-        </div>
+        {visibleProducts.length === 0 ? (
+          <div className="surface rounded-lg p-6 text-center text-sm font-bold text-ink/60">
+            لا توجد منتجات بعد. يمكن إضافة منتجات من صفحة المنتجات أو إعادة التهيئة مع منتجات demo.
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {visibleProducts.map((product) => (
+              <button
+                key={product.id}
+                type="button"
+                onClick={() => addItem(product)}
+                disabled={!canSell || !shiftOpen}
+                className="surface min-h-32 rounded-lg p-4 text-right transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span className="text-xs text-ink/50">{product.category}</span>
+                <strong className="mt-3 block text-lg">{product.name}</strong>
+                <span className="mt-2 block text-sm font-bold text-mint">{money.format(product.price)}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
       <aside className="surface rounded-lg p-4">
@@ -226,9 +261,11 @@ export function PosTerminal() {
           </div>
         </div>
 
-        <button type="button" onClick={completeOrder} disabled={!shiftOpen || cart.length === 0} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-mint px-4 py-3 font-black text-white disabled:cursor-not-allowed disabled:bg-ink/30">
+        {error && <p className="mt-4 rounded-lg bg-date/10 p-3 text-sm font-bold text-date">{error}</p>}
+
+        <button type="button" onClick={completeOrder} disabled={!canCheckout} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-mint px-4 py-3 font-black text-white disabled:cursor-not-allowed disabled:bg-ink/30">
           <CreditCard className="h-5 w-5" aria-hidden="true" />
-          إتمام الدفع وإصدار الفاتورة
+          {isSubmitting ? "جارٍ إنشاء الطلب..." : "إتمام الدفع وإصدار الفاتورة"}
         </button>
 
         <div className="mt-4 rounded-lg border border-ink/10 p-4">
@@ -247,7 +284,7 @@ export function PosTerminal() {
 
         {completedInvoice && (
           <div className="mt-4 rounded-lg border border-mint/30 bg-mint/5 p-4">
-            <p className="text-sm font-black text-mint">تم إنشاء الطلب والفاتورة للديمو</p>
+            <p className="text-sm font-black text-mint">تم إنشاء الطلب والفاتورة</p>
             <div className="mt-3 grid gap-2 text-sm">
               <div className="flex justify-between">
                 <span>رقم الطلب</span>
@@ -258,8 +295,8 @@ export function PosTerminal() {
                 <strong>{completedInvoice.invoiceNumber}</strong>
               </div>
               <div className="flex justify-between">
-                <span>الكاشير</span>
-                <strong>كاشير مقهى جاد</strong>
+                <span>التاريخ</span>
+                <strong>{new Date(completedInvoice.issuedAt).toLocaleString("ar-SA")}</strong>
               </div>
               <div className="flex justify-between">
                 <span>نوع الطلب</span>

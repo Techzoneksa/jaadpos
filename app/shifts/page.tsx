@@ -2,7 +2,7 @@ import { AppShell } from "@/components/app-shell";
 
 export default function ShiftsPage() {
   return (
-    <AppShell title="الورديات" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER", "CASHIER"]}>
+    <AppShell title="الورديات" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER"]}>
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
         <section className="surface rounded-lg p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">

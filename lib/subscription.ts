@@ -33,4 +33,8 @@ export function canCreateFinancialRecords(subscription: SubscriptionSnapshot, no
   return false;
 }
 
-export const expiredTrialMessage = "انتهت فترة التجربة المجانية. يمكنك ترقية الاشتراك لاستمرار استخدام نقاط البيع وإصدار الفواتير.";
+export function normalizeSubscriptionStatus(status: string): SubscriptionStatus {
+  return status.toLowerCase() as SubscriptionStatus;
+}
+
+export const expiredTrialMessage = "انتهت فترة التجربة المجانية. يرجى التواصل مع فريق جاد لتفعيل الاشتراك.";

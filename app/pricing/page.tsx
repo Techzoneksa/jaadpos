@@ -18,10 +18,12 @@ export default function PricingPage() {
                 <span className="rounded-lg bg-fog p-3">{plan.limits.posDevices} أجهزة</span>
                 <span className="rounded-lg bg-fog p-3">{plan.limits.users} مستخدم</span>
               </div>
+              <Link href={consoleUrl(`/signup?plan=${plan.code}`)} className="mt-5 inline-flex w-full justify-center rounded-lg bg-mint px-5 py-3 font-black text-white">
+                ابدأ تجربة {plan.name}
+              </Link>
             </div>
           ))}
         </div>
-        <Link href={consoleUrl("/signup")} className="mt-8 inline-flex rounded-lg bg-mint px-5 py-3 font-black text-white">ابدأ التجربة المجانية</Link>
       </section>
     </main>
   );

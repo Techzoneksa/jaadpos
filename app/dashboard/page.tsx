@@ -1,12 +1,101 @@
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/stat-card";
-import { dashboardMetrics, recentOrders, trialDaysLeft } from "@/lib/demo-data";
+import { requireTenantAccess } from "@/lib/platform-access";
+import { prisma } from "@/lib/prisma";
+import { daysRemaining } from "@/lib/subscription";
 
-export default function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<{
+    onboarded?: string;
+  }>;
+};
+
+const money = new Intl.NumberFormat("ar-SA", {
+  style: "currency",
+  currency: "SAR"
+});
+
+const subscriptionLabels = {
+  TRIAL: "تجربة",
+  ACTIVE: "نشط",
+  EXPIRED: "منتهي",
+  CANCELLED: "ملغي",
+  PAST_DUE: "متأخر"
+} as const;
+
+const orderTypeLabels = {
+  DINE_IN: "داخل المحل",
+  TAKEAWAY: "سفري",
+  DELIVERY: "توصيل"
+} as const;
+
+const paymentLabels = {
+  CASH: "نقدي",
+  MADA: "مدى",
+  VISA_MASTERCARD: "Visa/Mastercard",
+  APPLE_PAY: "Apple Pay"
+} as const;
+
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams;
+  const session = await requireTenantAccess(["TENANT_OWNER", "BRANCH_MANAGER"]);
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: session.tenantId! },
+    include: {
+      plan: true,
+      subscription: true,
+      _count: {
+        select: {
+          branches: true,
+          posDevices: true,
+          users: true
+        }
+      },
+      orders: {
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: {
+          invoice: true,
+          payments: true,
+          cashier: { select: { name: true } }
+        }
+      }
+    }
+  });
+
+  const [orderTotals, invoiceCount] = await Promise.all([
+    prisma.order.aggregate({
+      where: { tenantId: session.tenantId!, status: "PAID" },
+      _sum: { total: true, taxTotal: true },
+      _count: { _all: true }
+    }),
+    prisma.invoice.count({ where: { tenantId: session.tenantId! } })
+  ]);
+
+  const totalSales = Number(orderTotals._sum.total ?? 0);
+  const totalTax = Number(orderTotals._sum.taxTotal ?? 0);
+  const trialDaysLeft = tenant?.subscription ? daysRemaining(tenant.subscription.trialEndsAt) : 0;
+  const isTrialNearEnd = tenant?.subscription?.status === "TRIAL" && trialDaysLeft <= 3;
+
+  const metrics = [
+    { label: "المبيعات", value: money.format(totalSales), hint: "طلبات مدفوعة" },
+    { label: "الطلبات", value: String(orderTotals._count._all), hint: "من شاشة POS" },
+    { label: "الفواتير", value: String(invoiceCount), hint: "Basic QR" },
+    { label: "ضريبة VAT", value: money.format(totalTax), hint: "15% حسب الإعدادات" }
+  ];
+
   return (
-    <AppShell title="لوحة التحكم">
+    <AppShell title="لوحة التحكم" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER"]}>
+      {params.onboarded === "1" && (
+        <div className="mb-5 rounded-lg border border-mint/20 bg-mint/10 p-4 font-bold text-mint">
+          تم تجهيز حسابك بنجاح، يمكنك الآن بدء البيع من شاشة نقاط البيع.
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardMetrics.map((metric) => (
+        {metrics.map((metric) => (
           <StatCard key={metric.label} {...metric} />
         ))}
       </div>
@@ -15,7 +104,11 @@ export default function DashboardPage() {
         <section className="surface rounded-lg p-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xl font-black">آخر الطلبات</h2>
-            <span className="rounded-full bg-mint/10 px-3 py-1 text-sm font-bold text-mint">Trial: {trialDaysLeft} يوم متبقي</span>
+            {tenant?.subscription && (
+              <span className="rounded-full bg-mint/10 px-3 py-1 text-sm font-bold text-mint">
+                {subscriptionLabels[tenant.subscription.status]}: {trialDaysLeft} يوم متبقي
+              </span>
+            )}
           </div>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[720px] text-sm">
@@ -31,17 +124,23 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-ink/10">
-                    <td className="p-3 font-bold">{order.id}</td>
-                    <td className="p-3">{order.invoice}</td>
-                    <td className="p-3">{order.cashier}</td>
-                    <td className="p-3">{order.type}</td>
-                    <td className="p-3">{order.payment}</td>
-                    <td className="p-3 font-bold">{order.total}</td>
-                    <td className="p-3">{order.status}</td>
+                {tenant?.orders.length ? (
+                  tenant.orders.map((order) => (
+                    <tr key={order.id} className="border-b border-ink/10">
+                      <td className="p-3 font-bold">{order.orderNumber}</td>
+                      <td className="p-3">{order.invoice?.invoiceNumber ?? "-"}</td>
+                      <td className="p-3">{order.cashier.name}</td>
+                      <td className="p-3">{orderTypeLabels[order.orderType]}</td>
+                      <td className="p-3">{order.payments[0] ? paymentLabels[order.payments[0].method] : "-"}</td>
+                      <td className="p-3 font-bold">{money.format(Number(order.total))}</td>
+                      <td className="p-3">{order.status === "PAID" ? "مدفوع" : order.status}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="p-5 text-center text-ink/55" colSpan={7}>لا توجد طلبات بعد.</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -51,12 +150,19 @@ export default function DashboardPage() {
           <h2 className="text-xl font-black">حالة الاشتراك</h2>
           <div className="mt-4 rounded-lg bg-fog p-4">
             <p className="text-sm text-ink/60">الباقة الحالية</p>
-            <p className="mt-1 text-2xl font-black">Growth</p>
-            <p className="mt-3 text-sm leading-7 text-ink/65">يمنع النظام تجاوز حدود الباقة في الفروع وأجهزة POS والمستخدمين.</p>
+            <p className="mt-1 text-2xl font-black">{tenant?.plan.nameEnglish ?? "-"}</p>
+            <p className="mt-3 text-sm leading-7 text-ink/65">
+              الفروع: {tenant?._count.branches ?? 0}/{tenant?.plan.maxBranches ?? 0} · الأجهزة: {tenant?._count.posDevices ?? 0}/{tenant?.plan.maxPosDevices ?? 0} · المستخدمون: {tenant?._count.users ?? 0}/{tenant?.plan.maxUsers ?? 0}
+            </p>
           </div>
-          <div className="mt-4 rounded-lg border border-date/30 bg-date/10 p-4 text-sm leading-7 text-date">
-            عند انتهاء التجربة لا يتم حذف بيانات العميل، ويتم منع إنشاء طلبات وفواتير جديدة حتى التفعيل أو التمديد.
+          <div className="mt-4 rounded-lg border border-mint/20 bg-mint/10 p-4 text-sm leading-7 text-mint">
+            الحالة: {tenant?.subscription ? subscriptionLabels[tenant.subscription.status] : "-"} · الأيام المتبقية: {trialDaysLeft}
           </div>
+          {isTrialNearEnd && (
+            <div className="mt-4 rounded-lg border border-date/30 bg-date/10 p-4 text-sm leading-7 text-date">
+              التجربة المجانية أوشكت على الانتهاء. يرجى التواصل مع فريق جاد لتفعيل الاشتراك.
+            </div>
+          )}
         </aside>
       </div>
     </AppShell>
