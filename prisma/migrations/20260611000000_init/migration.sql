@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "PlanCode" AS ENUM ('STARTER', 'GROWTH', 'PRO');
 
 -- CreateEnum

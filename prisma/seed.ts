@@ -92,10 +92,10 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: "platform@jaadpos.com" },
+    where: { email: "admin@jaadpos.com" },
     update: {},
     create: {
-      email: "platform@jaadpos.com",
+      email: "admin@jaadpos.com",
       name: "JAAD Platform Owner",
       passwordHash: platformOwnerPassword,
       role: "PLATFORM_OWNER"

@@ -12,7 +12,7 @@ export default function JaadLoginPage() {
         <form action="/api/auth/login" method="post" className="mt-6 space-y-4">
           <label className="block">
             <span className="text-sm font-bold">البريد الإلكتروني</span>
-            <input name="email" type="email" required className="mt-2 w-full rounded-lg border-ink/10" placeholder="platform@jaadpos.com" />
+            <input name="email" type="email" required className="mt-2 w-full rounded-lg border-ink/10" placeholder="admin@jaadpos.com" />
           </label>
           <label className="block">
             <span className="text-sm font-bold">كلمة المرور</span>

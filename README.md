@@ -46,7 +46,7 @@ Seed passwords are read from environment variables only. See `.env.example`.
 
 ## Demo Accounts
 
-- Platform Owner: `platform@jaadpos.com`
+- Platform Owner: `admin@jaadpos.com`
 - Tenant Owner: `owner@jaadpos.com`
 - Cashier: `cashier@jaadpos.com`
 - Accountant: `accountant@jaadpos.com`
