@@ -12,9 +12,9 @@ export default async function JaadSupportPage() {
         <h2 className="text-xl font-black">أدوات الدعم</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {["البحث عن Tenant", "مراجعة آخر الطلبات", "تمديد تجربة", "تغيير باقة", "تعطيل عميل", "ملاحظة دعم"].map((item) => (
-            <button key={item} type="button" className="rounded-lg border border-ink/10 bg-fog p-4 text-right font-bold">
+            <div key={item} className="rounded-lg border border-ink/10 bg-fog p-4 text-right font-bold text-ink/65">
               {item}
-            </button>
+            </div>
           ))}
         </div>
       </section>

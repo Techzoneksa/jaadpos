@@ -12,7 +12,8 @@ export default function ForgotPasswordPage() {
             <span className="text-sm font-bold">البريد الإلكتروني</span>
             <input type="email" className="mt-2 w-full rounded-lg border-ink/10" />
           </label>
-          <button type="button" className="w-full rounded-lg bg-ink px-4 py-3 font-black text-white">تجهيز رابط الاستعادة</button>
+          <button type="button" disabled className="w-full cursor-not-allowed rounded-lg bg-ink/30 px-4 py-3 font-black text-white">استعادة كلمة المرور غير متاحة</button>
+          <p className="mt-3 text-center text-sm font-bold text-date">هذه الميزة غير متاحة في هذه المرحلة.</p>
         </form>
       </section>
     </main>

@@ -98,6 +98,10 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
     );
   }
 
+  function printInvoice() {
+    window.print();
+  }
+
   async function completeOrder() {
     if (!canCheckout) return;
 
@@ -276,7 +280,7 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
             </div>
             <QRCodeSVG value={qrPayload} size={64} />
           </div>
-          <button type="button" className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-ink/10 px-4 py-2 text-sm font-bold">
+          <button type="button" onClick={printInvoice} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-ink/10 px-4 py-2 text-sm font-bold">
             <Printer className="h-4 w-4" aria-hidden="true" />
             إعادة عرض/طباعة الفاتورة
           </button>

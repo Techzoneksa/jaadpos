@@ -47,9 +47,14 @@ export default async function ReportsPage() {
             <p className="text-sm text-ink/60">{report.name}</p>
             <p className="mt-2 text-2xl font-black">{report.total}</p>
             <p className="mt-1 text-sm text-mint">{report.change}</p>
-            <button type="button" className="mt-4 flex items-center gap-2 rounded-lg border border-ink/10 px-3 py-2 text-sm font-bold">
+            <button
+              type="button"
+              disabled
+              className="mt-4 flex cursor-not-allowed items-center gap-2 rounded-lg border border-ink/10 px-3 py-2 text-sm font-bold text-ink/45"
+              title="هذه الميزة غير متاحة في هذه المرحلة."
+            >
               <Download className="h-4 w-4" aria-hidden="true" />
-              CSV
+              CSV غير متاح
             </button>
           </div>
         ))}

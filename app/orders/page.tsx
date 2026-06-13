@@ -42,13 +42,7 @@ export default async function OrdersPage() {
       <section className="surface rounded-lg p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-black">قائمة الطلبات</h2>
-          <div className="flex flex-wrap gap-2">
-            {["اليوم", "الفرع", "الكاشير", "الحالة", "طريقة الدفع", "نوع الطلب"].map((filter) => (
-              <button key={filter} type="button" className="rounded-lg border border-ink/10 bg-white px-3 py-2 text-sm font-bold">
-                {filter}
-              </button>
-            ))}
-          </div>
+          <span className="rounded-lg bg-fog px-3 py-2 text-sm font-bold text-ink/65">الفلاتر المتقدمة غير متاحة في هذه المرحلة.</span>
         </div>
         <label className="mt-4 flex items-center gap-2 rounded-lg border border-ink/10 bg-fog px-3 py-2">
           <Search className="h-4 w-4 text-ink/50" aria-hidden="true" />
@@ -82,9 +76,14 @@ export default async function OrdersPage() {
                     <td className="p-3">{order.payments[0] ? paymentLabels[order.payments[0].method] : "-"}</td>
                     <td className="p-3 font-bold">{money.format(Number(order.total))}</td>
                     <td className="p-3">
-                      <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-fog px-3 py-2 font-bold text-ink">
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-ink/10 px-3 py-2 font-bold text-ink/50"
+                        title="هذه الميزة غير متاحة في هذه المرحلة."
+                      >
                         <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                        استرجاع
+                        الاسترجاع غير متاح
                       </button>
                     </td>
                   </tr>
