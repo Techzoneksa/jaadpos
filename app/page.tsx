@@ -91,10 +91,11 @@ export default function Home() {
               <div key={plan.code} className="surface rounded-lg p-6">
                 <h3 className="text-2xl font-black">{plan.name}</h3>
                 <p className="mt-2 text-ink/60">{plan.priceLabel}</p>
-                <div className="mt-5 grid grid-cols-3 gap-2 text-center text-sm">
+                <div className="mt-5 grid grid-cols-2 gap-2 text-center text-sm">
                   <span className="rounded-lg bg-fog p-3">{plan.limits.branches} فروع</span>
                   <span className="rounded-lg bg-fog p-3">{plan.limits.posDevices} أجهزة</span>
                   <span className="rounded-lg bg-fog p-3">{plan.limits.users} مستخدم</span>
+                  <span className="rounded-lg bg-fog p-3">{plan.limits.products} منتج</span>
                 </div>
                 <ul className="mt-5 space-y-3">
                   {plan.features.map((feature) => (

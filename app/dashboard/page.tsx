@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/stat-card";
+import { getTenantPlanUsage } from "@/lib/plan-limits";
 import { requireTenantAccess } from "@/lib/platform-access";
 import { prisma } from "@/lib/prisma";
 import { daysRemaining } from "@/lib/subscription";
@@ -50,7 +51,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         select: {
           branches: true,
           posDevices: true,
-          users: true
+          users: true,
+          products: true
         }
       },
       orders: {
@@ -65,13 +67,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     }
   });
 
-  const [orderTotals, invoiceCount] = await Promise.all([
+  const [orderTotals, invoiceCount, planUsage] = await Promise.all([
     prisma.order.aggregate({
       where: { tenantId: session.tenantId!, status: "PAID" },
       _sum: { total: true, taxTotal: true },
       _count: { _all: true }
     }),
-    prisma.invoice.count({ where: { tenantId: session.tenantId! } })
+    prisma.invoice.count({ where: { tenantId: session.tenantId! } }),
+    getTenantPlanUsage(session.tenantId!)
   ]);
 
   const totalSales = Number(orderTotals._sum.total ?? 0);
@@ -152,7 +155,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <p className="text-sm text-ink/60">الباقة الحالية</p>
             <p className="mt-1 text-2xl font-black">{tenant?.plan.nameEnglish ?? "-"}</p>
             <p className="mt-3 text-sm leading-7 text-ink/65">
-              الفروع: {tenant?._count.branches ?? 0}/{tenant?.plan.maxBranches ?? 0} · الأجهزة: {tenant?._count.posDevices ?? 0}/{tenant?.plan.maxPosDevices ?? 0} · المستخدمون: {tenant?._count.users ?? 0}/{tenant?.plan.maxUsers ?? 0}
+              الفروع: {planUsage.usage.branches}/{planUsage.limits.branches} · الأجهزة: {planUsage.usage.posDevices}/{planUsage.limits.posDevices} · المستخدمون: {planUsage.usage.users}/{planUsage.limits.users} · المنتجات: {planUsage.usage.products}/{planUsage.limits.products}
             </p>
           </div>
           <div className="mt-4 rounded-lg border border-mint/20 bg-mint/10 p-4 text-sm leading-7 text-mint">

@@ -97,7 +97,8 @@ export async function POST(request: Request) {
       tenantId: session.tenantId,
       id: { in: [...quantityByProduct.keys()] },
       status: "ACTIVE",
-      available: true
+      available: true,
+      category: { status: "ACTIVE" }
     },
     include: { category: true }
   });

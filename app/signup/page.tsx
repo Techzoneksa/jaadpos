@@ -37,10 +37,11 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               <p className="text-sm font-bold text-mint">الباقة المختارة</p>
               <h2 className="mt-2 text-2xl font-black">{selectedPlan.name}</h2>
               <p className="mt-1 text-sm leading-6 text-ink/65">{selectedPlan.priceLabel}</p>
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-bold">
+              <div className="mt-4 grid grid-cols-2 gap-2 text-center text-xs font-bold">
                 <span className="rounded-md bg-white p-2">{selectedPlan.limits.branches} فروع</span>
                 <span className="rounded-md bg-white p-2">{selectedPlan.limits.posDevices} أجهزة</span>
                 <span className="rounded-md bg-white p-2">{selectedPlan.limits.users} مستخدم</span>
+                <span className="rounded-md bg-white p-2">{selectedPlan.limits.products} منتج</span>
               </div>
             </aside>
           </div>

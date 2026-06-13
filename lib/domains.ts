@@ -35,6 +35,8 @@ export function isConsolePath(pathname: string) {
     "/onboarding",
     "/dashboard",
     "/pos",
+    "/branches",
+    "/devices",
     "/products",
     "/orders",
     "/invoices",

@@ -23,7 +23,7 @@ export default async function PosPage() {
         take: 1
       },
       products: {
-        where: { status: "ACTIVE", available: true },
+        where: { status: "ACTIVE", available: true, category: { status: "ACTIVE" } },
         orderBy: { createdAt: "asc" },
         include: { category: true }
       }

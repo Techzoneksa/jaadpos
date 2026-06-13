@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { BarChart3, Boxes, Building2, Clock3, LayoutDashboard, ReceiptText, Settings, Store, Users } from "lucide-react";
+import { BarChart3, Boxes, Building2, Clock3, LayoutDashboard, MonitorSmartphone, ReceiptText, Settings, Store, Users } from "lucide-react";
 import { requireTenantAccess, type TenantRole } from "@/lib/platform-access";
 import { prisma } from "@/lib/prisma";
 
 const navItems = [
   { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
   { href: "/pos", label: "POS", icon: Store },
+  { href: "/branches", label: "الفروع", icon: Building2 },
+  { href: "/devices", label: "الأجهزة", icon: MonitorSmartphone },
   { href: "/products", label: "المنتجات", icon: Boxes },
   { href: "/orders", label: "الطلبات", icon: ReceiptText },
   { href: "/invoices", label: "الفواتير", icon: ReceiptText },

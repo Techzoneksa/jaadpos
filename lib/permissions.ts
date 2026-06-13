@@ -4,6 +4,7 @@ export type PermissionKey =
   | "platform.manage"
   | "tenant.manage"
   | "branches.manage"
+  | "devices.manage"
   | "users.manage"
   | "products.manage"
   | "pos.use"
@@ -15,7 +16,7 @@ export type PermissionKey =
 export const rolePermissions: Record<RoleKey, PermissionKey[]> = {
   PLATFORM_OWNER: ["platform.manage", "reports.read"],
   PLATFORM_STAFF: ["platform.manage", "reports.read"],
-  TENANT_OWNER: ["tenant.manage", "branches.manage", "users.manage", "products.manage", "pos.use", "orders.read", "reports.read", "refunds.manage", "settings.manage"],
+  TENANT_OWNER: ["tenant.manage", "branches.manage", "devices.manage", "users.manage", "products.manage", "pos.use", "orders.read", "reports.read", "refunds.manage", "settings.manage"],
   BRANCH_MANAGER: ["pos.use", "orders.read", "reports.read", "refunds.manage"],
   CASHIER: ["pos.use"],
   ACCOUNTANT: ["orders.read", "reports.read", "refunds.manage"]

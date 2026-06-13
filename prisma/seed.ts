@@ -80,6 +80,7 @@ async function main() {
       { key: "platform.manage", description: "إدارة المنصة" },
       { key: "tenant.manage", description: "إدارة المنشأة" },
       { key: "branches.manage", description: "إدارة الفروع" },
+      { key: "devices.manage", description: "إدارة أجهزة POS" },
       { key: "users.manage", description: "إدارة المستخدمين" },
       { key: "products.manage", description: "إدارة المنتجات" },
       { key: "pos.use", description: "استخدام نقاط البيع" },
