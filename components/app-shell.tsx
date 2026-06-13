@@ -20,8 +20,8 @@ const navItems = [
 const navByRole: Record<TenantRole, Array<(typeof navItems)[number]["href"]>> = {
   TENANT_OWNER: navItems.map((item) => item.href),
   BRANCH_MANAGER: ["/dashboard", "/pos", "/products", "/orders", "/invoices", "/shifts", "/reports"],
-  CASHIER: ["/pos"],
-  ACCOUNTANT: ["/invoices", "/reports"]
+  CASHIER: ["/pos", "/orders", "/shifts"],
+  ACCOUNTANT: ["/orders", "/invoices", "/shifts", "/reports"]
 };
 
 export async function AppShell({ title, children, allowedRoles }: { title: string; children: React.ReactNode; allowedRoles?: TenantRole[] }) {

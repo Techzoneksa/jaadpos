@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { StatCard } from "@/components/stat-card";
 import { getTenantPlanUsage } from "@/lib/plan-limits";
@@ -42,19 +43,13 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams;
   const session = await requireTenantAccess(["TENANT_OWNER", "BRANCH_MANAGER"]);
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId! },
     include: {
       plan: true,
       subscription: true,
-      _count: {
-        select: {
-          branches: true,
-          posDevices: true,
-          users: true,
-          products: true
-        }
-      },
       orders: {
         orderBy: { createdAt: "desc" },
         take: 6,
@@ -67,26 +62,33 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     }
   });
 
-  const [orderTotals, invoiceCount, planUsage] = await Promise.all([
+  const [todayOrders, refunds, invoiceCount, planUsage] = await Promise.all([
     prisma.order.aggregate({
-      where: { tenantId: session.tenantId!, status: "PAID" },
+      where: { tenantId: session.tenantId!, status: "PAID", createdAt: { gte: startOfDay } },
       _sum: { total: true, taxTotal: true },
       _count: { _all: true }
     }),
-    prisma.invoice.count({ where: { tenantId: session.tenantId! } }),
+    prisma.refund.aggregate({
+      where: { tenantId: session.tenantId!, createdAt: { gte: startOfDay } },
+      _sum: { amount: true, taxAmount: true },
+      _count: { _all: true }
+    }),
+    prisma.invoice.count({ where: { tenantId: session.tenantId!, issuedAt: { gte: startOfDay } } }),
     getTenantPlanUsage(session.tenantId!)
   ]);
 
-  const totalSales = Number(orderTotals._sum.total ?? 0);
-  const totalTax = Number(orderTotals._sum.taxTotal ?? 0);
+  const totalSales = Number(todayOrders._sum.total ?? 0);
+  const totalTax = Number(todayOrders._sum.taxTotal ?? 0);
+  const refundTotal = Number(refunds._sum.amount ?? 0);
+  const netSales = Math.max(0, totalSales - refundTotal);
   const trialDaysLeft = tenant?.subscription ? daysRemaining(tenant.subscription.trialEndsAt) : 0;
   const isTrialNearEnd = tenant?.subscription?.status === "TRIAL" && trialDaysLeft <= 3;
 
   const metrics = [
-    { label: "المبيعات", value: money.format(totalSales), hint: "طلبات مدفوعة" },
-    { label: "الطلبات", value: String(orderTotals._count._all), hint: "من شاشة POS" },
-    { label: "الفواتير", value: String(invoiceCount), hint: "Basic QR" },
-    { label: "ضريبة VAT", value: money.format(totalTax), hint: "15% حسب الإعدادات" }
+    { label: "مبيعات اليوم", value: money.format(totalSales), hint: `${todayOrders._count._all} طلب مدفوع` },
+    { label: "الفواتير اليوم", value: String(invoiceCount), hint: "فواتير محفوظة" },
+    { label: "ضريبة اليوم", value: money.format(totalTax), hint: "حسب إعدادات الفاتورة" },
+    { label: "صافي اليوم", value: money.format(netSales), hint: `${refunds._count._all} مرتجع` }
   ];
 
   return (
@@ -114,7 +116,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             )}
           </div>
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="w-full min-w-[780px] text-sm">
               <thead className="bg-fog text-ink/60">
                 <tr>
                   <th className="p-3 text-right">رقم الطلب</th>
@@ -130,8 +132,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 {tenant?.orders.length ? (
                   tenant.orders.map((order) => (
                     <tr key={order.id} className="border-b border-ink/10">
-                      <td className="p-3 font-bold">{order.orderNumber}</td>
-                      <td className="p-3">{order.invoice?.invoiceNumber ?? "-"}</td>
+                      <td className="p-3 font-bold">
+                        <Link href={`/orders/${order.id}`} className="text-mint">{order.orderNumber}</Link>
+                      </td>
+                      <td className="p-3">
+                        {order.invoice ? <Link href={`/invoices/${order.invoice.id}`} className="font-bold text-mint">{order.invoice.invoiceNumber}</Link> : "-"}
+                      </td>
                       <td className="p-3">{order.cashier.name}</td>
                       <td className="p-3">{orderTypeLabels[order.orderType]}</td>
                       <td className="p-3">{order.payments[0] ? paymentLabels[order.payments[0].method] : "-"}</td>

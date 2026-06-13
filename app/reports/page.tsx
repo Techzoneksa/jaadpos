@@ -31,12 +31,13 @@ export default async function ReportsPage() {
   const total = Number(paidOrders._sum.total ?? 0);
   const refundTotal = Number(refunds._sum.amount ?? 0);
   const refundTax = Number(refunds._sum.taxAmount ?? 0);
+  const netSales = Math.max(0, total - refundTotal);
   const netTax = Math.max(0, tax - refundTax);
   const reportRows = [
     { name: "إجمالي المبيعات", total: money.format(total), change: `${paidOrders._count._all} طلب` },
-    { name: "الفواتير", total: String(invoiceCount), change: "Basic QR" },
+    { name: "الفواتير", total: String(invoiceCount), change: "فواتير محفوظة" },
     { name: "المرتجعات", total: money.format(refundTotal), change: `${refunds._count._all} عملية` },
-    { name: "صافي VAT", total: money.format(netTax), change: "بعد المرتجعات" }
+    { name: "صافي المبيعات", total: money.format(netSales), change: "بعد المرتجعات" }
   ];
 
   return (
@@ -51,7 +52,7 @@ export default async function ReportsPage() {
               type="button"
               disabled
               className="mt-4 flex cursor-not-allowed items-center gap-2 rounded-lg border border-ink/10 px-3 py-2 text-sm font-bold text-ink/45"
-              title="هذه الميزة غير متاحة في هذه المرحلة."
+              title="التصدير غير متاح حاليًا."
             >
               <Download className="h-4 w-4" aria-hidden="true" />
               CSV غير متاح
@@ -60,7 +61,7 @@ export default async function ReportsPage() {
         ))}
       </div>
       <section className="surface mt-5 rounded-lg p-5">
-        <h2 className="text-xl font-black">تقرير VAT</h2>
+        <h2 className="text-xl font-black">تقرير الضريبة</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-5">
           {[
             ["قبل الضريبة", money.format(subtotal)],
@@ -75,7 +76,7 @@ export default async function ReportsPage() {
             </div>
           ))}
         </div>
-        <p className="mt-5 rounded-lg bg-sea/10 p-4 leading-7 text-sea">هذا التقرير يساعد المحاسب في مراجعة المبيعات والضريبة قبل تقديم الإقرار عبر القنوات الرسمية.</p>
+        <p className="mt-5 rounded-lg bg-sea/10 p-4 leading-7 text-sea">تعرض هذه الصفحة أرقامًا فعلية من الطلبات والفواتير والمرتجعات المسجلة داخل المنشأة.</p>
       </section>
     </AppShell>
   );

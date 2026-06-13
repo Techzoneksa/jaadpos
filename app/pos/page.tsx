@@ -6,7 +6,23 @@ import { canCreateFinancialRecords, expiredTrialMessage, normalizeSubscriptionSt
 
 export const dynamic = "force-dynamic";
 
-export default async function PosPage() {
+type PosPageProps = {
+  searchParams: Promise<{
+    shiftStatus?: string;
+  }>;
+};
+
+const shiftMessages = {
+  opened: "تم فتح الوردية بنجاح.",
+  already_open: "لديك وردية مفتوحة بالفعل.",
+  forbidden: "لا تملك صلاحية تنفيذ هذا الإجراء.",
+  invalid: "تعذر فتح الوردية. تأكد من البيانات وحاول مرة أخرى.",
+  missing_setup: "أضف فرعًا وجهاز POS نشطًا قبل فتح الوردية.",
+  error: "تعذر تنفيذ الإجراء. حاول مرة أخرى."
+} as const;
+
+export default async function PosPage({ searchParams }: PosPageProps) {
+  const params = await searchParams;
   const session = await requireTenantAccess(["TENANT_OWNER", "BRANCH_MANAGER", "CASHIER"]);
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId! },
@@ -41,6 +57,19 @@ export default async function PosPage() {
 
   const branch = tenant?.branches[0];
   const device = tenant?.posDevices[0];
+  const openShift =
+    tenant && branch && device
+      ? await prisma.shift.findFirst({
+          where: {
+            tenantId: session.tenantId!,
+            branchId: branch.id,
+            deviceId: device.id,
+            cashierId: session.userId,
+            status: "OPEN"
+          },
+          select: { id: true }
+        })
+      : null;
   const products: PosProduct[] =
     tenant?.products.map((product) => ({
       id: product.id,
@@ -68,7 +97,9 @@ export default async function PosPage() {
             deviceCode: device.code
           }}
           canSell={canSell}
+          shiftOpen={Boolean(openShift)}
           blockedMessage={expiredTrialMessage}
+          shiftMessage={params.shiftStatus ? shiftMessages[params.shiftStatus as keyof typeof shiftMessages] : null}
         />
       )}
     </AppShell>

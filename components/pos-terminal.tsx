@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CreditCard, Minus, Plus, Printer, Trash2, Wifi } from "lucide-react";
+import { CreditCard, Minus, Plus, Printer, ReceiptText, Trash2, Wifi } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { buildBasicQrPayload, calculateTax } from "@/lib/tax";
 
@@ -24,6 +25,8 @@ type CartItem = PosProduct & {
 };
 
 type CompletedInvoice = {
+  orderId: string;
+  invoiceId: string;
   orderNumber: string;
   invoiceNumber: string;
   issuedAt: string;
@@ -41,7 +44,9 @@ type PosTerminalProps = {
   categories: string[];
   tenant: PosTenantInfo;
   canSell: boolean;
+  shiftOpen: boolean;
   blockedMessage?: string;
+  shiftMessage?: string | null;
 };
 
 const money = new Intl.NumberFormat("ar-SA", {
@@ -49,12 +54,11 @@ const money = new Intl.NumberFormat("ar-SA", {
   currency: "SAR"
 });
 
-export function PosTerminal({ products, categories, tenant, canSell, blockedMessage }: PosTerminalProps) {
+export function PosTerminal({ products, categories, tenant, canSell, shiftOpen, blockedMessage, shiftMessage }: PosTerminalProps) {
   const [category, setCategory] = useState("الكل");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orderType, setOrderType] = useState("داخل المحل");
   const [paymentMethod, setPaymentMethod] = useState("مدى");
-  const [shiftOpen, setShiftOpen] = useState(true);
   const [completedInvoice, setCompletedInvoice] = useState<CompletedInvoice | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +76,8 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
 
   const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
   const canCheckout = canSell && shiftOpen && cart.length > 0 && !isSubmitting;
+  const disabledSaleReason = !canSell ? blockedMessage : !shiftOpen ? "افتح وردية قبل بدء البيع." : undefined;
+  const checkoutDisabledReason = disabledSaleReason ?? (cart.length === 0 ? "اختر منتجًا واحدًا على الأقل." : undefined);
 
   function addItem(product: PosProduct) {
     if (!canSell || !shiftOpen) return;
@@ -102,7 +108,18 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
     window.print();
   }
 
+  function startNewOrder() {
+    setCart([]);
+    setCompletedInvoice(null);
+    setError(null);
+  }
+
   async function completeOrder() {
+    if (!shiftOpen) {
+      setError("افتح وردية قبل بدء البيع.");
+      return;
+    }
+
     if (!canCheckout) return;
 
     setIsSubmitting(true);
@@ -141,20 +158,26 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
               <p className="text-sm text-ink/60">الفرع والجهاز</p>
               <h2 className="text-xl font-bold">{tenant.branchName} · {tenant.deviceCode}</h2>
             </div>
-            <button
-              type="button"
-              onClick={() => setShiftOpen((value) => !value)}
-              disabled={!canSell}
-              className={shiftOpen ? "rounded-lg bg-mint px-4 py-2 text-sm font-bold text-white disabled:bg-ink/30" : "rounded-lg bg-date px-4 py-2 text-sm font-bold text-white disabled:bg-ink/30"}
-            >
-              {shiftOpen ? "وردية مفتوحة" : "افتح وردية"}
-            </button>
+            <span className={shiftOpen ? "rounded-lg bg-mint px-4 py-2 text-sm font-bold text-white" : "rounded-lg bg-date px-4 py-2 text-sm font-bold text-white"}>
+              {shiftOpen ? "وردية مفتوحة" : "لا توجد وردية"}
+            </span>
           </div>
           {!canSell && <p className="mt-3 rounded-lg bg-date/10 p-3 text-sm font-bold text-date">{blockedMessage}</p>}
-          {!shiftOpen && canSell && <p className="mt-3 rounded-lg bg-date/10 p-3 text-sm font-bold text-date">يجب فتح وردية قبل إنشاء طلب جديد.</p>}
+          {shiftMessage && <p className="mt-3 rounded-lg bg-mint/10 p-3 text-sm font-bold text-mint">{shiftMessage}</p>}
+          {!shiftOpen && canSell && (
+            <form action="/api/shifts/open" method="post" className="mt-4 rounded-lg bg-date/10 p-4">
+              <input type="hidden" name="returnTo" value="/pos" />
+              <p className="text-sm font-bold text-date">افتح وردية قبل بدء البيع.</p>
+              <label className="mt-3 block text-sm font-bold">
+                بداية الصندوق
+                <input name="openingFloat" required type="number" min="0" step="0.01" className="mt-2 w-full rounded-lg border-ink/10 bg-white" defaultValue="0" />
+              </label>
+              <button type="submit" className="mt-3 rounded-lg bg-mint px-4 py-2 text-sm font-black text-white">فتح وردية</button>
+            </form>
+          )}
           <p className="mt-3 flex items-center gap-2 text-sm text-ink/60">
             <Wifi className="h-4 w-4 text-mint" aria-hidden="true" />
-            يتطلب JAADPOS اتصالًا بالإنترنت في هذه النسخة. سيتم دعم وضع عدم الاتصال لاحقًا.
+            يحتاج JAADPOS اتصالًا بالإنترنت أثناء البيع وحفظ الفاتورة.
           </p>
         </div>
 
@@ -173,7 +196,7 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
 
         {visibleProducts.length === 0 ? (
           <div className="surface rounded-lg p-6 text-center text-sm font-bold text-ink/60">
-            لا توجد منتجات بعد. يمكن إضافة منتجات من صفحة المنتجات أو إعادة التهيئة مع منتجات demo.
+            لا توجد منتجات متاحة للبيع. أضف منتجات نشطة ضمن تصنيف نشط من صفحة المنتجات.
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -184,6 +207,7 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
                 onClick={() => addItem(product)}
                 disabled={!canSell || !shiftOpen}
                 className="surface min-h-32 rounded-lg p-4 text-right transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                title={disabledSaleReason}
               >
                 <span className="text-xs text-ink/50">{product.category}</span>
                 <strong className="mt-3 block text-lg">{product.name}</strong>
@@ -267,28 +291,24 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
 
         {error && <p className="mt-4 rounded-lg bg-date/10 p-3 text-sm font-bold text-date">{error}</p>}
 
-        <button type="button" onClick={completeOrder} disabled={!canCheckout} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-mint px-4 py-3 font-black text-white disabled:cursor-not-allowed disabled:bg-ink/30">
+        <button type="button" onClick={completeOrder} disabled={!canCheckout} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-mint px-4 py-3 font-black text-white disabled:cursor-not-allowed disabled:bg-ink/30" title={checkoutDisabledReason}>
           <CreditCard className="h-5 w-5" aria-hidden="true" />
-          {isSubmitting ? "جارٍ إنشاء الطلب..." : "إتمام الدفع وإصدار الفاتورة"}
+          {isSubmitting ? "جاري إنشاء الطلب..." : "إتمام الدفع وإصدار الفاتورة"}
         </button>
 
         <div className="mt-4 rounded-lg border border-ink/10 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-bold">Basic QR E-Invoice</p>
-              <p className="text-xs text-ink/55">فاتورة QR جاهزة للعرض والطباعة.</p>
+              <p className="text-sm font-bold">فاتورة QR</p>
+              <p className="text-xs text-ink/55">سيظهر الإيصال الكامل بعد الدفع.</p>
             </div>
             <QRCodeSVG value={qrPayload} size={64} />
           </div>
-          <button type="button" onClick={printInvoice} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-ink/10 px-4 py-2 text-sm font-bold">
-            <Printer className="h-4 w-4" aria-hidden="true" />
-            إعادة عرض/طباعة الفاتورة
-          </button>
         </div>
 
         {completedInvoice && (
           <div className="mt-4 rounded-lg border border-mint/30 bg-mint/5 p-4">
-            <p className="text-sm font-black text-mint">تم إنشاء الطلب والفاتورة</p>
+            <p className="text-sm font-black text-mint">تم إنشاء الطلب والفاتورة بنجاح.</p>
             <div className="mt-3 grid gap-2 text-sm">
               <div className="flex justify-between">
                 <span>رقم الطلب</span>
@@ -301,10 +321,6 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
               <div className="flex justify-between">
                 <span>التاريخ</span>
                 <strong>{new Date(completedInvoice.issuedAt).toLocaleString("ar-SA")}</strong>
-              </div>
-              <div className="flex justify-between">
-                <span>نوع الطلب</span>
-                <strong>{completedInvoice.orderType}</strong>
               </div>
               <div className="flex justify-between">
                 <span>طريقة الدفع</span>
@@ -321,7 +337,7 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
             </div>
             <div className="mt-3 grid gap-2 text-sm">
               <div className="flex justify-between">
-                <span>الإجمالي قبل الضريبة</span>
+                <span>قبل الضريبة</span>
                 <strong>{money.format(completedInvoice.subtotal)}</strong>
               </div>
               <div className="flex justify-between">
@@ -329,13 +345,26 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
                 <strong>{money.format(completedInvoice.tax)}</strong>
               </div>
               <div className="flex justify-between text-base font-black">
-                <span>الإجمالي شامل الضريبة</span>
+                <span>الإجمالي</span>
                 <span>{money.format(completedInvoice.total)}</span>
               </div>
             </div>
             <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-white p-3">
               <p className="text-xs leading-6 text-ink/60">تم حفظ الفاتورة وربطها بالطلب وطريقة الدفع.</p>
               <QRCodeSVG value={completedInvoice.qrPayload} size={72} />
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <button type="button" onClick={printInvoice} className="flex items-center justify-center gap-2 rounded-lg border border-ink/10 bg-white px-3 py-2 text-sm font-bold">
+                <Printer className="h-4 w-4" aria-hidden="true" />
+                طباعة الفاتورة
+              </button>
+              <button type="button" onClick={startNewOrder} className="rounded-lg bg-ink px-3 py-2 text-sm font-bold text-white">
+                طلب جديد
+              </button>
+              <Link href={`/invoices/${completedInvoice.invoiceId}`} className="flex items-center justify-center gap-2 rounded-lg bg-mint px-3 py-2 text-sm font-bold text-white">
+                <ReceiptText className="h-4 w-4" aria-hidden="true" />
+                عرض الفاتورة
+              </Link>
             </div>
           </div>
         )}

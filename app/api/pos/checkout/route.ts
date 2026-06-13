@@ -87,6 +87,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "أكمل التهيئة أولًا لإنشاء الفرع وجهاز POS." }, { status: 400 });
   }
 
+  const shift = await prisma.shift.findFirst({
+    where: {
+      tenantId: session.tenantId,
+      branchId: branch.id,
+      deviceId: device.id,
+      cashierId: session.userId,
+      status: "OPEN"
+    },
+    select: { id: true }
+  });
+
+  if (!shift) {
+    return NextResponse.json({ error: "افتح وردية قبل بدء البيع." }, { status: 400 });
+  }
+
   const quantityByProduct = new Map<string, number>();
   for (const item of parsed.data.items) {
     quantityByProduct.set(item.productId, (quantityByProduct.get(item.productId) ?? 0) + item.quantity);
@@ -140,29 +155,11 @@ export async function POST(request: Request) {
     total,
     tax
   });
+  let createdOrderId = "";
+  let createdInvoiceId = "";
 
   await prisma.$transaction(async (tx) => {
-    const shift =
-      (await tx.shift.findFirst({
-        where: {
-          tenantId: session.tenantId!,
-          branchId: branch.id,
-          deviceId: device.id,
-          cashierId: session.userId,
-          status: "OPEN"
-        }
-      })) ??
-      (await tx.shift.create({
-        data: {
-          tenantId: session.tenantId!,
-          branchId: branch.id,
-          deviceId: device.id,
-          cashierId: session.userId,
-          openingFloat: 0
-        }
-      }));
-
-    await tx.order.create({
+    const order = await tx.order.create({
       data: {
         tenantId: session.tenantId!,
         branchId: branch.id,
@@ -210,11 +207,19 @@ export async function POST(request: Request) {
             footerText: tenant.invoiceSettings?.footerText ?? "شكرًا لزيارتكم"
           }
         }
+      },
+      include: {
+        invoice: { select: { id: true } }
       }
     });
+
+    createdOrderId = order.id;
+    createdInvoiceId = order.invoice?.id ?? "";
   });
 
   return NextResponse.json({
+    orderId: createdOrderId,
+    invoiceId: createdInvoiceId,
     orderNumber,
     invoiceNumber,
     issuedAt: issuedAt.toISOString(),
