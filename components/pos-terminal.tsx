@@ -272,7 +272,7 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold">Basic QR E-Invoice</p>
-              <p className="text-xs text-ink/55">الربط المباشر مع منصة فاتورة/ZATCA غير مفعل حاليًا.</p>
+              <p className="text-xs text-ink/55">فاتورة QR جاهزة للعرض والطباعة.</p>
             </div>
             <QRCodeSVG value={qrPayload} size={64} />
           </div>
@@ -330,7 +330,7 @@ export function PosTerminal({ products, categories, tenant, canSell, blockedMess
               </div>
             </div>
             <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-white p-3">
-              <p className="text-xs leading-6 text-ink/60">فواتير ضريبية إلكترونية أساسية مع QR. الربط المباشر مع منصة فاتورة/ZATCA Phase 2 خدمة متقدمة لاحقًا.</p>
+              <p className="text-xs leading-6 text-ink/60">تم حفظ الفاتورة وربطها بالطلب وطريقة الدفع.</p>
               <QRCodeSVG value={completedInvoice.qrPayload} size={72} />
             </div>
           </div>

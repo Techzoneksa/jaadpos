@@ -81,7 +81,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
             <label className="flex items-start gap-3 rounded-lg border border-ink/10 bg-fog p-4 text-sm font-bold leading-7 md:col-span-2">
               <input name="terms" value="accepted" type="checkbox" required className="mt-1 rounded border-ink/20 text-mint" />
-              أوافق على بدء تجربة مجانية لمدة 14 يومًا، وأفهم أن الربط المباشر مع منصة فاتورة/ZATCA Phase 2 وخدمات الدفع ليست مفعلة في هذه المرحلة.
+              أوافق على بدء تجربة مجانية لمدة 14 يومًا، وأفهم أن بياناتي ستستخدم لتجهيز حساب المنشأة داخل JAADPOS.
             </label>
 
             <div className="rounded-lg bg-white p-4 text-sm leading-7 text-ink/65 md:col-span-2">

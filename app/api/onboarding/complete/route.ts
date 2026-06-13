@@ -8,21 +8,26 @@ export const runtime = "nodejs";
 
 type TransactionClient = Omit<typeof prisma, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
-const optionalText = z.string().transform((value) => {
+const requiredText = z.string().trim().min(2);
+const optionalText = z.preprocess((value) => {
+  if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
-});
+}, z.string().nullable());
 
 const onboardingSchema = z.object({
-  commercialName: z.string().min(2),
+  commercialName: requiredText,
   legalName: optionalText,
   vatNumber: optionalText,
   commercialRegistration: optionalText,
-  city: z.string().min(2),
-  address: z.string().min(2),
-  phone: z.string().min(6),
-  email: z.string().email(),
-  branchName: z.string().min(2),
+  city: requiredText,
+  address: optionalText,
+  phone: optionalText,
+  branchName: requiredText,
+  branchCity: optionalText,
+  branchAddress: optionalText,
+  branchPhone: optionalText,
+  posDeviceName: requiredText,
   pricesIncludeTax: z.enum(["yes", "no"]).default("no"),
   footerText: optionalText,
   createDemoProducts: z.enum(["yes", "no"]).default("yes")
@@ -106,19 +111,22 @@ export async function POST(request: Request) {
           city: input.city,
           address: input.address,
           phone: input.phone,
-          email: input.email,
           onboardingCompleted: true
         }
       });
+
+      const branchCity = input.branchCity ?? input.city;
+      const branchAddress = input.branchAddress ?? input.address;
+      const branchPhone = input.branchPhone ?? input.phone;
 
       const branch = mainBranch
         ? await tx.branch.update({
             where: { id: mainBranch.id },
             data: {
               name: input.branchName,
-              city: input.city,
-              address: input.address,
-              phone: input.phone,
+              city: branchCity,
+              address: branchAddress,
+              phone: branchPhone,
               active: true
             }
           })
@@ -126,20 +134,20 @@ export async function POST(request: Request) {
             data: {
               tenantId: session.tenantId!,
               name: input.branchName,
-              city: input.city,
-              address: input.address,
-              phone: input.phone,
+              city: branchCity,
+              address: branchAddress,
+              phone: branchPhone,
               isMain: true
             }
           });
 
       await tx.posDevice.upsert({
         where: { tenantId_code: { tenantId: session.tenantId!, code: "POS-01" } },
-        update: { branchId: branch.id, active: true },
+        update: { branchId: branch.id, name: input.posDeviceName, active: true },
         create: {
           tenantId: session.tenantId!,
           branchId: branch.id,
-          name: "جهاز الكاشير الرئيسي",
+          name: input.posDeviceName,
           code: "POS-01"
         }
       });

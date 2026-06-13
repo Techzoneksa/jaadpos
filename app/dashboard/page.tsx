@@ -90,7 +90,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <AppShell title="لوحة التحكم" allowedRoles={["TENANT_OWNER", "BRANCH_MANAGER"]}>
       {params.onboarded === "1" && (
         <div className="mb-5 rounded-lg border border-mint/20 bg-mint/10 p-4 font-bold text-mint">
-          تم تجهيز حسابك بنجاح، يمكنك الآن بدء البيع من شاشة نقاط البيع.
+          تم تجهيز حسابك بنجاح. يمكنك الآن البدء من لوحة التحكم.
         </div>
       )}
 

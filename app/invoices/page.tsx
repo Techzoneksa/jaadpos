@@ -37,7 +37,7 @@ export default async function InvoicesPage() {
       <section className="surface rounded-lg p-5">
         <h2 className="text-xl font-black">الفواتير الضريبية الإلكترونية الأساسية</h2>
         <p className="mt-2 rounded-lg bg-date/10 p-4 leading-7 text-date">
-          يدعم JAADPOS فواتير ضريبية إلكترونية أساسية مع QR وتقارير VAT. الربط المباشر مع منصة فاتورة/ZATCA Phase 2 خدمة متقدمة لاحقًا حسب حاجة المنشأة.
+          يمكنك مراجعة الفواتير المحفوظة مع QR والإجماليات وطريقة الدفع من هذه الصفحة.
         </p>
         <div className="mt-5 overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">

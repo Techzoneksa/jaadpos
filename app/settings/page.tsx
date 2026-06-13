@@ -43,9 +43,8 @@ export default function SettingsPage() {
             </label>
             <div className="rounded-lg bg-fog p-4">
               <p className="font-black">وضع الفوترة الحالي: Basic QR E-Invoice</p>
-              <p className="mt-2 text-ink/65">حالة الربط مع منصة فاتورة/ZATCA: غير مفعل</p>
+              <p className="mt-2 text-ink/65">يمكنك تعديل بيانات الفاتورة والضريبة من هذه الصفحة.</p>
             </div>
-            <p className="rounded-lg bg-date/10 p-4 leading-7 text-date">الربط المباشر مع منصة فاتورة/ZATCA Phase 2 غير مفعل في هذه النسخة. يمكن إضافته لاحقًا كخدمة متقدمة حسب طلب العميل.</p>
           </div>
         </section>
       </div>

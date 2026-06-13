@@ -70,7 +70,7 @@ export default async function ReportsPage() {
             </div>
           ))}
         </div>
-        <p className="mt-5 rounded-lg bg-sea/10 p-4 leading-7 text-sea">هذا التقرير يساعد المحاسب في مراجعة المبيعات والضريبة. تقديم الإقرار الضريبي يتم عبر بوابة زاتكا بواسطة المنشأة أو المحاسب.</p>
+        <p className="mt-5 rounded-lg bg-sea/10 p-4 leading-7 text-sea">هذا التقرير يساعد المحاسب في مراجعة المبيعات والضريبة قبل تقديم الإقرار عبر القنوات الرسمية.</p>
       </section>
     </AppShell>
   );
